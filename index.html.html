@@ -1,0 +1,2416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coriander — Salary Slip Management System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  :root {
+    --coriander-deep: #1a3a2a;
+    --coriander-primary: #2d5f3f;
+    --coriander-medium: #4a7c59;
+    --coriander-light: #7cb342;
+    --coriander-fresh: #aed581;
+    --coriander-pale: #e8f5e9;
+    --coriander-mist: #f1f8f2;
+    --soil-dark: #5d4037;
+    --soil-medium: #8d6e63;
+    --soil-light: #d7ccc8;
+    --cream: #faf9f4;
+    --cream-warm: #f5f3e7;
+    --ink: #1a2e1d;
+    --ink-soft: #3d4f3f;
+    --ink-muted: #6b7c6e;
+    --danger: #c62828;
+    --warning: #ef6c00;
+    --info: #1565c0;
+  }
+  
+  * { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+  
+  .font-display { font-family: 'Fraunces', serif; }
+  .font-italic-display { font-family: 'Fraunces', serif; font-style: italic; }
+  
+  /* === LOGIN === */
+  .login-bg {
+    background: linear-gradient(135deg, #1a3a2a 0%, #2d5f3f 40%, #4a7c59 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .login-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(174, 213, 129, 0.2) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(124, 179, 66, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(245, 243, 231, 0.05) 0%, transparent 70%);
+  }
+  
+  .leaf-particle {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0.12;
+    animation: leafFall 15s linear infinite;
+  }
+  
+  @keyframes leafFall {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.12; }
+    90% { opacity: 0.12; }
+    100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+  }
+  
+  .login-card {
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255,255,255,0.2);
+  }
+  
+  /* === SCROLLBAR === */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--coriander-medium); border-radius: 4px; opacity: 0.5; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--coriander-primary); }
+  
+  /* === GLASS === */
+  .glass {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  /* === CARDS === */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(45, 95, 63, 0.15);
+  }
+  
+  /* === BUTTONS === */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--coriander-primary) 0%, var(--coriander-medium) 100%);
+    color: white;
+    transition: all 0.3s;
+    box-shadow: 0 4px 14px rgba(45, 95, 63, 0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(45, 95, 63, 0.4);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  
+  .btn-ghost {
+    background: transparent;
+    color: var(--coriander-primary);
+    border: 1.5px solid var(--coriander-pale);
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover {
+    background: var(--coriander-pale);
+    border-color: var(--coriander-light);
+  }
+  
+  .btn-danger {
+    background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+    color: white;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover { box-shadow: 0 4px 14px rgba(198, 40, 40, 0.3); }
+  
+  /* === INPUTS === */
+  .input-field {
+    background: white;
+    border: 1.5px solid #e0ddd5;
+    transition: all 0.2s;
+    border-radius: 10px;
+  }
+  .input-field:focus {
+    border-color: var(--coriander-light);
+    box-shadow: 0 0 0 3px rgba(124, 179, 66, 0.15);
+    outline: none;
+  }
+  .input-field::placeholder { color: #b0aaa0; }
+  
+  /* === ATTENDANCE === */
+  .day-cell {
+    transition: all 0.15s;
+    cursor: pointer;
+    user-select: none;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+    border: 1.5px solid #e8e5dd;
+    background: white;
+    color: var(--ink-soft);
+  }
+  .day-cell:hover {
+    transform: scale(1.08);
+    border-color: var(--coriander-light);
+    z-index: 2;
+  }
+  .day-cell.present { background: #4a7c59; color: white; border-color: #4a7c59; }
+  .day-cell.absent { background: #c62828; color: white; border-color: #c62828; }
+  .day-cell.leave { background: #ef6c00; color: white; border-color: #ef6c00; }
+  .day-cell.weekoff { background: #8d6e63; color: white; border-color: #8d6e63; }
+  .day-cell.empty { background: #f5f3e7; border-color: #e8e5dd; color: #c4beb0; cursor: not-allowed; }
+  .day-cell.empty:hover { transform: none; }
+  
+  /* === SALARY SLIP === */
+  .slip-paper {
+    background: white;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  
+  /* === SIDEBAR === */
+  .sidebar-item {
+    transition: all 0.2s;
+    border-radius: 12px;
+  }
+  .sidebar-item.active {
+    background: linear-gradient(135deg, var(--coriander-primary) 0%, var(--coriander-medium) 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(45, 95, 63, 0.3);
+  }
+  .sidebar-item:not(.active) {
+    color: var(--ink-soft);
+  }
+  .sidebar-item:not(.active):hover {
+    background: var(--coriander-pale);
+    color: var(--coriander-primary);
+  }
+  
+  /* === VIEW TRANSITIONS === */
+  .view {
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* === MODAL === */
+  .modal-backdrop {
+    background: rgba(26, 46, 29, 0.55);
+    backdrop-filter: blur(6px);
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-content {
+    animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  
+  /* === TOAST === */
+  .toast {
+    animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+  }
+  @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes fadeOut {
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  
+  /* === PATTERN BG === */
+  .pattern-bg {
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(124, 179, 66, 0.12) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+  
+  /* === STAT CARD === */
+  .stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    border: 1px solid #ece8de;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--coriander-light), var(--coriander-primary));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s;
+  }
+  .stat-card:hover::before { transform: scaleX(1); }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(45, 95, 63, 0.1);
+  }
+  
+  /* === TABLE === */
+  .data-table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .data-table th {
+    background: var(--coriander-mist);
+    color: var(--coriander-primary);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--coriander-pale);
+  }
+  .data-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f0ede4;
+    font-size: 14px;
+  }
+  .data-table tbody tr {
+    transition: background 0.15s;
+  }
+  .data-table tbody tr:hover {
+    background: var(--coriander-mist);
+  }
+  
+  /* === BADGE === */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .badge-green { background: #e8f5e9; color: #2e7d32; }
+  .badge-red { background: #ffebee; color: #c62828; }
+  .badge-orange { background: #fff3e0; color: #ef6c00; }
+  .badge-brown { background: #efebe9; color: #5d4037; }
+  .badge-blue { background: #e3f2fd; color: #1565c0; }
+  
+  /* === SLIP STYLES === */
+  .slip-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .slip-table th {
+    background: var(--coriander-primary);
+    color: white;
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .slip-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #e8e5dd;
+  }
+  .slip-table tr:nth-child(even) td {
+    background: #faf9f4;
+  }
+  .slip-table .total-row td {
+    background: var(--coriander-pale);
+    font-weight: 700;
+    color: var(--coriander-primary);
+    border-top: 2px solid var(--coriander-light);
+  }
+  
+  /* === SECTION DIVIDER === */
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--coriander-pale), transparent);
+    margin: 16px 0;
+  }
+  
+  /* === LEAF DECORATION === */
+  .leaf-corner {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    opacity: 0.06;
+    pointer-events: none;
+  }
+  
+  /* === ANIMATED GRADIENT TEXT === */
+  .gradient-text {
+    background: linear-gradient(135deg, var(--coriander-primary), var(--coriander-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* === PROGRESS BAR === */
+  .progress-bar {
+    height: 6px;
+    background: var(--coriander-pale);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--coriander-light), var(--coriander-primary));
+    transition: width 0.6s ease;
+  }
+  
+  /* === TAB === */
+  .tab-btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: var(--ink-muted);
+  }
+  .tab-btn.active {
+    background: var(--coriander-primary);
+    color: white;
+  }
+  .tab-btn:not(.active):hover {
+    background: var(--coriander-pale);
+    color: var(--coriander-primary);
+  }
+  
+  /* === RESPONSIVE === */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+  }
+  
+  /* === PRINT === */
+  @media print {
+    body * { visibility: hidden; }
+    #slipPrintArea, #slipPrintArea * { visibility: visible; }
+    #slipPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== LOGIN SCREEN ============== -->
+<div id="loginScreen" class="login-bg min-h-screen flex items-center justify-center p-4 relative">
+  <!-- Floating leaves -->
+  <div id="leafContainer" class="absolute inset-0 overflow-hidden pointer-events-none"></div>
+  
+  <div class="relative z-10 w-full max-w-5xl grid md:grid-cols-2 gap-0 login-card rounded-3xl overflow-hidden">
+    
+    <!-- Left: Branding -->
+    <div class="hidden md:flex flex-col justify-between p-12 relative" style="background: linear-gradient(160deg, #f5f3e7 0%, #e8f5e9 100%);">
+      <div>
+        <!-- Logo -->
+        <div class="flex items-center gap-3 mb-2">
+          <svg width="48" height="48" viewBox="0 0 100 100" class="flex-shrink-0">
+            <g transform="translate(50, 50)">
+              <ellipse cx="-15" cy="-20" rx="10" ry="18" fill="#5a9367" transform="rotate(-30 -15 -20)"/>
+              <ellipse cx="15" cy="-20" rx="10" ry="18" fill="#4a7c59" transform="rotate(30 15 -20)"/>
+              <ellipse cx="-22" cy="0" rx="9" ry="16" fill="#7cb342" transform="rotate(-45 -22 0)"/>
+              <ellipse cx="22" cy="0" rx="9" ry="16" fill="#5a9367" transform="rotate(45 22 0)"/>
+              <ellipse cx="0" cy="-30" rx="8" ry="14" fill="#aed581"/>
+              <path d="M0,10 L0,40" stroke="#5d4037" stroke-width="2.5" stroke-linecap="round"/>
+              <ellipse cx="0" cy="45" rx="28" ry="6" fill="#8d6e63" opacity="0.5"/>
+            </g>
+          </svg>
+          <div>
+            <h1 class="font-italic-display text-4xl font-bold" style="color: var(--coriander-primary);">coriander</h1>
+            <p class="text-xs tracking-widest uppercase" style="color: var(--ink-muted);">Payroll System</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="my-8">
+        <h2 class="font-display text-3xl font-bold leading-tight mb-4" style="color: var(--coriander-deep);">
+          Fresh approach to<br>payroll management.
+        </h2>
+        <p class="text-sm leading-relaxed" style="color: var(--ink-soft);">
+          Manage employees, track attendance, apply penalties, and generate professional salary slips — all in one beautifully crafted workspace.
+        </p>
+      </div>
+      
+      <div class="space-y-3">
+        <div class="flex items-center gap-3 text-sm" style="color: var(--ink-soft);">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--coriander-pale);">
+            <i class="fas fa-users text-xs" style="color: var(--coriander-primary);"></i>
+          </div>
+          <span>Employee management with full details</span>
+        </div>
+        <div class="flex items-center gap-3 text-sm" style="color: var(--ink-soft);">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--coriander-pale);">
+            <i class="fas fa-calendar-check text-xs" style="color: var(--coriander-primary);"></i>
+          </div>
+          <span>Visual attendance tracking</span>
+        </div>
+        <div class="flex items-center gap-3 text-sm" style="color: var(--ink-soft);">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--coriander-pale);">
+            <i class="fas fa-file-pdf text-xs" style="color: var(--coriander-primary);"></i>
+          </div>
+          <span>PDF salary slip generation</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right: Login Form -->
+    <div class="p-12 flex flex-col justify-center bg-white">
+      <div class="mb-8">
+        <h2 class="font-display text-2xl font-bold mb-2" style="color: var(--ink);">Welcome back</h2>
+        <p class="text-sm" style="color: var(--ink-muted);">Sign in to access your payroll dashboard</p>
+      </div>
+      
+      <!-- Added autocomplete="off" and removed default values -->
+      <form id="loginForm" class="space-y-5" autocomplete="off">
+        <div>
+          <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Username</label>
+          <div class="relative">
+            <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-sm" style="color: var(--ink-muted);"></i>
+            <input type="text" id="loginUsername" class="input-field w-full pl-11 pr-4 py-3 text-sm" placeholder="Enter username" autocomplete="off">
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Password</label>
+          <div class="relative">
+            <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-sm" style="color: var(--ink-muted);"></i>
+            <!-- Use autocomplete="new-password" to prevent browser password managers from auto-filling -->
+            <input type="password" id="loginPassword" class="input-field w-full pl-11 pr-12 py-3 text-sm" placeholder="Enter password" autocomplete="new-password">
+            <button type="button" onclick="togglePassword('loginPassword', this)" class="absolute right-4 top-1/2 -translate-y-1/2 text-sm" style="color: var(--ink-muted);">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-between text-sm">
+          <label class="flex items-center gap-2 cursor-pointer" style="color: var(--ink-soft);">
+            <input type="checkbox" class="rounded" style="accent-color: var(--coriander-primary);">
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="font-medium" style="color: var(--coriander-primary);">Forgot password?</a>
+        </div>
+        
+        <button type="submit" class="btn-primary w-full py-3.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+          <i class="fas fa-sign-in-alt"></i>
+          Sign In to Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MAIN APP ============== -->
+<div id="mainApp" class="hidden min-h-screen flex">
+  
+  <!-- Sidebar -->
+  <aside class="sidebar w-64 flex-shrink-0 min-h-screen flex flex-col" style="background: white; border-right: 1px solid #ece8de;">
+    <!-- Logo -->
+    <div class="p-6 border-b" style="border-color: #ece8de;">
+      <div class="flex items-center gap-3">
+        <svg width="36" height="36" viewBox="0 0 100 100" class="flex-shrink-0">
+          <g transform="translate(50, 50)">
+            <ellipse cx="-15" cy="-20" rx="10" ry="18" fill="#5a9367" transform="rotate(-30 -15 -20)"/>
+            <ellipse cx="15" cy="-20" rx="10" ry="18" fill="#4a7c59" transform="rotate(30 15 -20)"/>
+            <ellipse cx="-22" cy="0" rx="9" ry="16" fill="#7cb342" transform="rotate(-45 -22 0)"/>
+            <ellipse cx="22" cy="0" rx="9" ry="16" fill="#5a9367" transform="rotate(45 22 0)"/>
+            <ellipse cx="0" cy="-30" rx="8" ry="14" fill="#aed581"/>
+            <path d="M0,10 L0,40" stroke="#5d4037" stroke-width="2.5" stroke-linecap="round"/>
+          </g>
+        </svg>
+        <div>
+          <h1 class="font-italic-display text-xl font-bold" style="color: var(--coriander-primary);">coriander</h1>
+          <p class="text-[10px] tracking-widest uppercase" style="color: var(--ink-muted);">Payroll</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="flex-1 p-4 space-y-1">
+      <button onclick="navigate('dashboard')" class="sidebar-item active w-full flex items-center gap-3 px-4 py-3 text-sm font-medium" data-view="dashboard">
+        <i class="fas fa-th-large w-5"></i>
+        <span>Dashboard</span>
+      </button>
+      <button onclick="navigate('employees')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium" data-view="employees">
+        <i class="fas fa-users w-5"></i>
+        <span>Employees</span>
+      </button>
+      <button onclick="navigate('attendance')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium" data-view="attendance">
+        <i class="fas fa-calendar-check w-5"></i>
+        <span>Attendance</span>
+      </button>
+      <button onclick="navigate('slips')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium" data-view="slips">
+        <i class="fas fa-file-invoice-dollar w-5"></i>
+        <span>Salary Slips</span>
+      </button>
+      <button onclick="navigate('settings')" class="sidebar-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium" data-view="settings">
+        <i class="fas fa-cog w-5"></i>
+        <span>Settings</span>
+      </button>
+    </nav>
+    
+    <!-- User -->
+    <div class="p-4 border-t" style="border-color: #ece8de;">
+      <div class="flex items-center gap-3 p-3 rounded-xl" style="background: var(--coriander-mist);">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style="background: linear-gradient(135deg, var(--coriander-primary), var(--coriander-medium));">
+          AD
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold truncate" style="color: var(--ink);">Administrator</p>
+          <p class="text-xs truncate" style="color: var(--ink-muted);">admin@coriander</p>
+        </div>
+        <button onclick="logout()" class="text-sm" style="color: var(--ink-muted);" title="Logout">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+  
+  <!-- Main Content -->
+  <main class="flex-1 overflow-auto" style="background: var(--cream);">
+    
+    <!-- =========== DASHBOARD VIEW =========== -->
+    <section id="dashboardView" class="view p-8">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="font-display text-3xl font-bold mb-1" style="color: var(--ink);">Dashboard</h1>
+          <p class="text-sm" style="color: var(--ink-muted);">Welcome back, here's your payroll overview</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs uppercase tracking-wider" style="color: var(--ink-muted);">Today</p>
+          <p class="font-semibold" style="color: var(--coriander-primary);" id="todayDate"></p>
+        </div>
+      </div>
+      
+      <!-- Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="stat-card">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--coriander-pale);">
+              <i class="fas fa-users text-lg" style="color: var(--coriander-primary);"></i>
+            </div>
+            <span class="badge badge-green"><i class="fas fa-arrow-up text-[8px]"></i> Active</span>
+          </div>
+          <p class="text-3xl font-bold" style="color: var(--ink);" id="statEmployees">0</p>
+          <p class="text-xs mt-1" style="color: var(--ink-muted);">Total Employees</p>
+        </div>
+        
+        <div class="stat-card">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: #e3f2fd;">
+              <i class="fas fa-calendar-day text-lg" style="color: #1565c0;"></i>
+            </div>
+            <span class="badge badge-blue" id="statMonthLabel">This Month</span>
+          </div>
+          <p class="text-3xl font-bold" style="color: var(--ink);" id="statSlips">0</p>
+          <p class="text-xs mt-1" style="color: var(--ink-muted);">Slips Generated</p>
+        </div>
+        
+        <div class="stat-card">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: #fff3e0;">
+              <i class="fas fa-wallet text-lg" style="color: #ef6c00;"></i>
+            </div>
+            <span class="badge badge-orange">Payroll</span>
+          </div>
+          <p class="text-3xl font-bold" style="color: var(--ink);"><span style="font-size: 18px; color: var(--ink-muted);">₹</span><span id="statPayroll">0</span></p>
+          <p class="text-xs mt-1" style="color: var(--ink-muted);">Net Payable (This Month)</p>
+        </div>
+        
+        <div class="stat-card">
+          <div class="flex items-start justify-between mb-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: #ffebee;">
+              <i class="fas fa-exclamation-triangle text-lg" style="color: #c62828;"></i>
+            </div>
+            <span class="badge badge-red" id="statPendingLabel">Pending</span>
+          </div>
+          <p class="text-3xl font-bold" style="color: var(--ink);" id="statPending">0</p>
+          <p class="text-xs mt-1" style="color: var(--ink-muted);">Slips Not Generated</p>
+        </div>
+      </div>
+      
+      <!-- Quick Actions + Recent -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Quick Actions -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-2xl p-6 border" style="border-color: #ece8de;">
+            <h3 class="font-display text-lg font-bold mb-4" style="color: var(--ink);">Quick Actions</h3>
+            <div class="space-y-2">
+              <button onclick="navigate('employees'); setTimeout(() => openEmployeeModal(), 100)" class="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium transition-all hover:translate-x-1" style="background: var(--coriander-mist); color: var(--coriander-primary);">
+                <i class="fas fa-user-plus w-5"></i> Add New Employee
+              </button>
+              <button onclick="navigate('attendance')" class="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium transition-all hover:translate-x-1" style="background: #fff3e0; color: #ef6c00;">
+                <i class="fas fa-calendar-plus w-5"></i> Mark Attendance
+              </button>
+              <button onclick="navigate('slips')" class="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium transition-all hover:translate-x-1" style="background: #e3f2fd; color: #1565c0;">
+                <i class="fas fa-file-pdf w-5"></i> Generate Salary Slip
+              </button>
+              <button onclick="navigate('settings')" class="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium transition-all hover:translate-x-1" style="background: #f3e5f5; color: #7b1fa2;">
+                <i class="fas fa-building w-5"></i> Company Settings
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Recent Employees -->
+        <div class="lg:col-span-2">
+          <div class="bg-white rounded-2xl p-6 border" style="border-color: #ece8de;">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-display text-lg font-bold" style="color: var(--ink);">Recent Employees</h3>
+              <button onclick="navigate('employees')" class="text-xs font-semibold" style="color: var(--coriander-primary);">View All →</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="data-table w-full">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Code</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Net Salary</th>
+                  </tr>
+                </thead>
+                <tbody id="recentEmployeesBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- =========== EMPLOYEES VIEW =========== -->
+    <section id="employeesView" class="view p-8 hidden">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="font-display text-3xl font-bold mb-1" style="color: var(--ink);">Employees</h1>
+          <p class="text-sm" style="color: var(--ink-muted);">Manage your workforce details</p>
+        </div>
+        <button onclick="openEmployeeModal()" class="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2">
+          <i class="fas fa-plus"></i> Add Employee
+        </button>
+      </div>
+      
+      <!-- Search -->
+      <div class="mb-6 flex gap-3">
+        <div class="relative flex-1">
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-sm" style="color: var(--ink-muted);"></i>
+          <input type="text" id="employeeSearch" oninput="renderEmployees()" class="input-field w-full pl-11 pr-4 py-2.5 text-sm" placeholder="Search by name, code, or department...">
+        </div>
+        <select id="deptFilter" onchange="renderEmployees()" class="input-field px-4 py-2.5 text-sm" style="min-width: 180px;">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      
+      <!-- Table -->
+      <div class="bg-white rounded-2xl border overflow-hidden" style="border-color: #ece8de;">
+        <div class="overflow-x-auto">
+          <table class="data-table w-full">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Code</th>
+                <th>Department</th>
+                <th>Designation</th>
+                <th>Branch</th>
+                <th>DOJ</th>
+                <th>Net Salary</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="employeesBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    
+    <!-- =========== ATTENDANCE VIEW =========== -->
+    <section id="attendanceView" class="view p-8 hidden">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="font-display text-3xl font-bold mb-1" style="color: var(--ink);">Attendance</h1>
+          <p class="text-sm" style="color: var(--ink-muted);">Mark daily attendance for each employee</p>
+        </div>
+      </div>
+      
+      <!-- Controls -->
+      <div class="bg-white rounded-2xl p-6 border mb-6" style="border-color: #ece8de;">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Employee</label>
+            <select id="attendanceEmployee" onchange="renderAttendance()" class="input-field w-full px-4 py-2.5 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Month</label>
+            <input type="month" id="attendanceMonth" onchange="renderAttendance()" class="input-field w-full px-4 py-2.5 text-sm">
+          </div>
+          <div class="flex items-end">
+            <div class="flex gap-2 flex-wrap">
+              <button onclick="markAllPresent()" class="btn-ghost px-3 py-2 rounded-lg text-xs font-semibold">Mark All Present</button>
+              <button onclick="markWeekOffs()" class="btn-ghost px-3 py-2 rounded-lg text-xs font-semibold">Auto Week Offs</button>
+              <button onclick="clearAttendance()" class="btn-ghost px-3 py-2 rounded-lg text-xs font-semibold" style="color: var(--danger);">Clear</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Legend -->
+        <div class="flex flex-wrap gap-4 mt-4 pt-4 border-t" style="border-color: #f0ede4;">
+          <div class="flex items-center gap-2 text-xs"><div class="w-4 h-4 rounded" style="background: #4a7c59;"></div><span style="color: var(--ink-soft);">Present (P)</span></div>
+          <div class="flex items-center gap-2 text-xs"><div class="w-4 h-4 rounded" style="background: #c62828;"></div><span style="color: var(--ink-soft);">Absent (A)</span></div>
+          <div class="flex items-center gap-2 text-xs"><div class="w-4 h-4 rounded" style="background: #ef6c00;"></div><span style="color: var(--ink-soft);">Leave (L)</span></div>
+          <div class="flex items-center gap-2 text-xs"><div class="w-4 h-4 rounded" style="background: #8d6e63;"></div><span style="color: var(--ink-soft);">Week Off (W)</span></div>
+          <div class="flex items-center gap-2 text-xs"><i class="fas fa-mouse-pointer text-[10px]" style="color: var(--ink-muted);"></i><span style="color: var(--ink-muted);">Click cells to cycle status</span></div>
+        </div>
+      </div>
+      
+      <!-- Calendar -->
+      <div class="bg-white rounded-2xl p-6 border mb-6" style="border-color: #ece8de;">
+        <div id="attendanceCalendar" class="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-14 lg:grid-cols-16 gap-2"></div>
+      </div>
+      
+      <!-- Summary -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="bg-white rounded-2xl p-5 border text-center" style="border-color: #ece8de;">
+          <p class="text-3xl font-bold" style="color: var(--coriander-primary);" id="sumPresent">0</p>
+          <p class="text-xs mt-1 uppercase tracking-wider" style="color: var(--ink-muted);">Present</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border text-center" style="border-color: #ece8de;">
+          <p class="text-3xl font-bold" style="color: var(--danger);" id="sumAbsent">0</p>
+          <p class="text-xs mt-1 uppercase tracking-wider" style="color: var(--ink-muted);">Absent</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border text-center" style="border-color: #ece8de;">
+          <p class="text-3xl font-bold" style="color: var(--warning);" id="sumLeave">0</p>
+          <p class="text-xs mt-1 uppercase tracking-wider" style="color: var(--ink-muted);">Leave</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border text-center" style="border-color: #ece8de;">
+          <p class="text-3xl font-bold" style="color: var(--soil-medium);" id="sumWeekOff">0</p>
+          <p class="text-xs mt-1 uppercase tracking-wider" style="color: var(--ink-muted);">Week Off</p>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border text-center" style="border-color: var(--coriander-light); background: var(--coriander-mist);">
+          <p class="text-3xl font-bold" style="color: var(--coriander-primary);" id="sumPayDays">0</p>
+          <p class="text-xs mt-1 uppercase tracking-wider" style="color: var(--ink-muted);">Pay Days</p>
+        </div>
+      </div>
+    </section>
+    
+    <!-- =========== SALARY SLIPS VIEW =========== -->
+    <section id="slipsView" class="view p-8 hidden">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="font-display text-3xl font-bold mb-1" style="color: var(--ink);">Salary Slips</h1>
+          <p class="text-sm" style="color: var(--ink-muted);">Generate and download PDF salary slips</p>
+        </div>
+      </div>
+      
+      <!-- Slip Generator -->
+      <div class="bg-white rounded-2xl p-6 border mb-6" style="border-color: #ece8de;">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Employee</label>
+            <select id="slipEmployee" onchange="onSlipEmployeeChange()" class="input-field w-full px-4 py-2.5 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Month</label>
+            <input type="month" id="slipMonth" onchange="onSlipMonthChange()" class="input-field w-full px-4 py-2.5 text-sm">
+          </div>
+          <div class="flex items-end">
+            <button onclick="generateSlipPreview()" class="btn-primary w-full px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2">
+              <i class="fas fa-sync-alt"></i> Generate Preview
+            </button>
+          </div>
+        </div>
+        
+        <!-- Penalties -->
+        <div class="mt-6 pt-6 border-t" style="border-color: #f0ede4;">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-display text-base font-bold" style="color: var(--ink);">
+              <i class="fas fa-gavel mr-2 text-sm" style="color: var(--danger);"></i>
+              Penalties & Extra Deductions
+            </h3>
+            <button onclick="addPenalty()" class="btn-ghost px-3 py-1.5 rounded-lg text-xs font-semibold">+ Add Penalty</button>
+          </div>
+          <div id="penaltiesList" class="space-y-2"></div>
+          <p class="text-xs mt-2" style="color: var(--ink-muted);">Penalties will be added to the total deductions in the salary slip.</p>
+        </div>
+      </div>
+      
+      <!-- Slip Preview -->
+      <div id="slipPreviewContainer" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-display text-xl font-bold" style="color: var(--ink);">Salary Slip Preview</h3>
+          <div class="flex gap-2">
+            <button onclick="downloadPDF()" class="btn-primary px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2">
+              <i class="fas fa-download"></i> Download PDF
+            </button>
+            <button onclick="window.print()" class="btn-ghost px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2">
+              <i class="fas fa-print"></i> Print
+            </button>
+          </div>
+        </div>
+        
+        <!-- The actual slip -->
+        <div class="flex justify-center">
+          <div id="slipPrintArea" class="slip-paper rounded-2xl overflow-hidden" style="width: 800px; padding: 40px;">
+            <!-- Slip content will be injected here -->
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- =========== SETTINGS VIEW =========== -->
+    <section id="settingsView" class="view p-8 hidden">
+      <div class="mb-6">
+        <h1 class="font-display text-3xl font-bold mb-1" style="color: var(--ink);">Settings</h1>
+        <p class="text-sm" style="color: var(--ink-muted);">Configure company details for salary slips</p>
+      </div>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Company Details -->
+        <div class="bg-white rounded-2xl p-6 border" style="border-color: #ece8de;">
+          <h3 class="font-display text-lg font-bold mb-4" style="color: var(--ink);">
+            <i class="fas fa-building mr-2" style="color: var(--coriander-primary);"></i>
+            Company Details
+          </h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Company Name</label>
+              <input type="text" id="setCompanyName" class="input-field w-full px-4 py-2.5 text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Address</label>
+              <textarea id="setCompanyAddress" rows="2" class="input-field w-full px-4 py-2.5 text-sm"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">ESIC Code No.</label>
+                <input type="text" id="setEsicCode" class="input-field w-full px-4 py-2.5 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">P.F. Code No.</label>
+                <input type="text" id="setPfCode" class="input-field w-full px-4 py-2.5 text-sm">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">SR NO. From</label>
+                <input type="number" id="setSrNo" class="input-field w-full px-4 py-2.5 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-2 uppercase tracking-wider" style="color: var(--ink-soft);">Series (Roman)</label>
+                <input type="text" id="setSrSeries" class="input-field w-full px-4 py-2.5 text-sm" placeholder="XIX">
+              </div>
+            </div>
+            <button onclick="saveCompanySettings()" class="btn-primary w-full px-5 py-2.5 rounded-xl text-sm font-semibold">
+              <i class="fas fa-save mr-2"></i> Save Settings
+            </button>
+          </div>
+        </div>
+        
+        <!-- Logo & Data Management -->
+        <div class="space-y-6">
+          <!-- Logo -->
+          <div class="bg-white rounded-2xl p-6 border" style="border-color: #ece8de;">
+            <h3 class="font-display text-lg font-bold mb-4" style="color: var(--ink);">
+              <i class="fas fa-image mr-2" style="color: var(--coriander-primary);"></i>
+              Company Logo
+            </h3>
+            <div class="flex items-center gap-4">
+              <div id="logoPreview" class="w-24 h-24 rounded-xl flex items-center justify-center border-2 border-dashed" style="border-color: var(--coriander-light); background: var(--coriander-mist);">
+                <svg width="48" height="48" viewBox="0 0 100 100">
+                  <g transform="translate(50, 50)">
+                    <ellipse cx="-15" cy="-20" rx="10" ry="18" fill="#5a9367" transform="rotate(-30 -15 -20)"/>
+                    <ellipse cx="15" cy="-20" rx="10" ry="18" fill="#4a7c59" transform="rotate(30 15 -20)"/>
+                    <ellipse cx="-22" cy="0" rx="9" ry="16" fill="#7cb342" transform="rotate(-45 -22 0)"/>
+                    <ellipse cx="22" cy="0" rx="9" ry="16" fill="#5a9367" transform="rotate(45 22 0)"/>
+                    <ellipse cx="0" cy="-30" rx="8" ry="14" fill="#aed581"/>
+                    <path d="M0,10 L0,40" stroke="#5d4037" stroke-width="2.5" stroke-linecap="round"/>
+                  </g>
+                </svg>
+              </div>
+              <div class="flex-1">
+                <input type="file" id="logoInput" accept="image/*" class="hidden">
+                <button onclick="document.getElementById('logoInput').click()" class="btn-ghost px-4 py-2 rounded-lg text-sm font-semibold mb-2">Upload Logo</button>
+                <p class="text-xs" style="color: var(--ink-muted);">PNG or JPG, max 2MB. Used in salary slip header.</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Data Management -->
+          <div class="bg-white rounded-2xl p-6 border" style="border-color: #ece8de;">
+            <h3 class="font-display text-lg font-bold mb-4" style="color: var(--ink);">
+              <i class="fas fa-database mr-2" style="color: var(--coriander-primary);"></i>
+              Data Management
+            </h3>
+            <div class="space-y-2">
+              <button onclick="exportData()" class="w-full flex items-center justify-between p-3 rounded-xl text-sm font-medium" style="background: var(--coriander-mist); color: var(--coriander-primary);">
+                <span><i class="fas fa-download mr-2"></i> Export All Data (JSON)</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+              <button onclick="document.getElementById('importInput').click()" class="w-full flex items-center justify-between p-3 rounded-xl text-sm font-medium" style="background: #e3f2fd; color: #1565c0;">
+                <span><i class="fas fa-upload mr-2"></i> Import Data</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+              <input type="file" id="importInput" accept=".json" class="hidden">
+              <button onclick="resetData()" class="w-full flex items-center justify-between p-3 rounded-xl text-sm font-medium" style="background: #ffebee; color: #c62828;">
+                <span><i class="fas fa-trash mr-2"></i> Reset All Data</span>
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+  </main>
+</div>
+
+<!-- ============== EMPLOYEE MODAL ============== -->
+<div id="employeeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+  <div class="modal-content bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b px-8 py-5 flex items-center justify-between rounded-t-3xl" style="border-color: #ece8de;">
+      <h2 class="font-display text-xl font-bold" style="color: var(--ink);" id="employeeModalTitle">Add Employee</h2>
+      <button onclick="closeEmployeeModal()" class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100" style="color: var(--ink-muted);">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <form id="employeeForm" class="p-8 space-y-6">
+      <input type="hidden" id="empId">
+      
+      <!-- Personal Info -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider mb-3" style="color: var(--coriander-primary);">Personal Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">Employee Name *</label>
+            <input type="text" id="empName" required class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., Muni Ram">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">Employee Code *</label>
+            <input type="text" id="empCode" required class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., COR013140">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">Date of Joining *</label>
+            <input type="date" id="empDoj" required class="input-field w-full px-4 py-2.5 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">Branch</label>
+            <input type="text" id="empBranch" class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., Gurugram">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Department -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider mb-3" style="color: var(--coriander-primary);">Department & Designation</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">Department</label>
+            <input type="text" id="empDept" class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., Driver">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">Designation</label>
+            <input type="text" id="empDesignation" class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., Driver">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Bank & Statutory -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider mb-3" style="color: var(--coriander-primary);">Bank & Statutory Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">Bank Name</label>
+            <input type="text" id="empBankName" class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., State Bank of India">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">Account Number</label>
+            <input type="text" id="empAccountNo" class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., 12345678901234">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">UAN Number</label>
+            <input type="text" id="empUan" class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., 100915091700">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1.5" style="color: var(--ink-soft);">ESI Number</label>
+            <input type="text" id="empEsi" class="input-field w-full px-4 py-2.5 text-sm" placeholder="e.g., 6936586030">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Salary Components -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider mb-3" style="color: var(--coriander-primary);">Earnings (Monthly Rate in ₹)</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Basic</label>
+            <input type="number" id="empBasic" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">HRA</label>
+            <input type="number" id="empHra" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Standard Allowance</label>
+            <input type="number" id="empStdAllow" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Fuel Allowance</label>
+            <input type="number" id="empFuelAllow" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Bonus</label>
+            <input type="number" id="empBonus" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Conveyance</label>
+            <input type="number" id="empConveyance" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Reimbursement</label>
+            <input type="number" id="empReimb" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Deductions -->
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider mb-3" style="color: var(--coriander-primary);">Deductions (Monthly in ₹)</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Employee PF</label>
+            <input type="number" id="empPf" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Employee ESI</label>
+            <input type="number" id="empEsiDed" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Medical</label>
+            <input type="number" id="empMedical" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">Advance</label>
+            <input type="number" id="empAdvance" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: var(--ink-soft);">LWF</label>
+            <input type="number" id="empLwf" class="input-field w-full px-3 py-2 text-sm" value="0" oninput="calcNetSalary()">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Summary -->
+      <div class="p-4 rounded-xl" style="background: var(--coriander-mist);">
+        <div class="flex items-center justify-between text-sm">
+          <span style="color: var(--ink-soft);">Total Earnings</span>
+          <span class="font-bold" style="color: var(--coriander-primary);" id="totalEarningsDisplay">₹0</span>
+        </div>
+        <div class="flex items-center justify-between text-sm mt-1">
+          <span style="color: var(--ink-soft);">Total Deductions</span>
+          <span class="font-bold" style="color: var(--danger);" id="totalDeductionsDisplay">₹0</span>
+        </div>
+        <div class="flex items-center justify-between text-base mt-2 pt-2 border-t" style="border-color: var(--coriander-pale);">
+          <span class="font-bold" style="color: var(--ink);">Net Salary</span>
+          <span class="font-bold text-lg" style="color: var(--coriander-primary);" id="netSalaryDisplay">₹0</span>
+        </div>
+      </div>
+      
+      <!-- Actions -->
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeEmployeeModal()" class="btn-ghost flex-1 px-5 py-3 rounded-xl text-sm font-semibold">Cancel</button>
+        <button type="submit" class="btn-primary flex-1 px-5 py-3 rounded-xl text-sm font-semibold">
+          <i class="fas fa-save mr-2"></i> Save Employee
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============== CONFIRM MODAL ============== -->
+<div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+  <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+    <div class="flex items-center gap-4 mb-4">
+      <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style="background: #ffebee;">
+        <i class="fas fa-exclamation-triangle" style="color: var(--danger);"></i>
+      </div>
+      <div>
+        <h3 class="font-display text-lg font-bold" style="color: var(--ink);" id="confirmTitle">Confirm</h3>
+        <p class="text-sm" style="color: var(--ink-muted);" id="confirmMessage">Are you sure?</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="closeConfirm()" class="btn-ghost flex-1 px-5 py-2.5 rounded-xl text-sm font-semibold">Cancel</button>
+      <button id="confirmBtn" class="btn-danger flex-1 px-5 py-2.5 rounded-xl text-sm font-semibold">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== TOAST CONTAINER ============== -->
+<div id="toastContainer" class="fixed top-6 right-6 z-[100] space-y-2"></div>
+
+<script>
+// ============== STATE ==============
+const defaultCompany = {
+  name: 'Foodies Health & Snacks Co.',
+  address: 'C-59, Hosiery Complex, Phase-II, Noida-201305',
+  esicCode: '69670530200010099',
+  pfCode: 'MRNOI0060065000',
+  srNo: 145,
+  srSeries: 'XIX',
+  logo: null
+};
+
+let state = {
+  currentUser: null,
+  currentView: 'dashboard',
+  employees: [],
+  attendance: {},
+  slips: [],
+  company: { ...defaultCompany },
+  penalties: [],
+  currentSlipData: null,
+};
+
+// ============== INIT ==============
+function init() {
+  loadData();
+  setupLoginLeaves();
+  setupEventListeners();
+  
+  // Set today's date
+  const today = new Date();
+  document.getElementById('todayDate').textContent = today.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  
+  // Set default month
+  const monthStr = today.toISOString().slice(0, 7);
+  document.getElementById('attendanceMonth').value = monthStr;
+  document.getElementById('slipMonth').value = monthStr;
+  
+  // Check if logged in
+  const session = sessionStorage.getItem('coriander_session');
+  if (session === 'active') {
+    showApp();
+  }
+}
+
+// ============== DATA ==============
+function loadData() {
+  state.employees = JSON.parse(localStorage.getItem('coriander_employees') || '[]');
+  state.attendance = JSON.parse(localStorage.getItem('coriander_attendance') || '{}');
+  state.slips = JSON.parse(localStorage.getItem('coriander_slips') || '[]');
+  const savedCompany = JSON.parse(localStorage.getItem('coriander_company') || 'null');
+  state.company = savedCompany || { ...defaultCompany };
+  
+  // Seed sample data if empty
+  if (state.employees.length === 0) {
+    seedSampleData();
+  }
+}
+
+function saveData() {
+  localStorage.setItem('coriander_employees', JSON.stringify(state.employees));
+  localStorage.setItem('coriander_attendance', JSON.stringify(state.attendance));
+  localStorage.setItem('coriander_slips', JSON.stringify(state.slips));
+  localStorage.setItem('coriander_company', JSON.stringify(state.company));
+}
+
+function seedSampleData() {
+  const samples = [
+    {
+      id: 'EMP001',
+      code: 'COR013140',
+      name: 'Muni Ram',
+      branch: 'Gurugram',
+      department: 'Driver',
+      designation: 'Driver',
+      uan: '100915091700',
+      esi: '6936586030',
+      doj: '2025-09-29',
+      bankName: 'HDFC Bank',
+      accountNo: '501000123456789',
+      basic: 11257, hra: 5321, stdAllow: 0, fuelAllow: 0, bonus: 938, conveyance: 0, reimb: 0,
+      pf: 1353, esiDed: 132, medical: 0, advance: 0, lwf: 68,
+    },
+    {
+      id: 'EMP002',
+      code: 'COR013141',
+      name: 'Rajesh Kumar',
+      branch: 'Noida',
+      department: 'Kitchen',
+      designation: 'Head Chef',
+      uan: '100915091701',
+      esi: '6936586031',
+      doj: '2024-03-15',
+      bankName: 'State Bank of India',
+      accountNo: '301000987654321',
+      basic: 18500, hra: 7400, stdAllow: 1500, fuelAllow: 0, bonus: 1500, conveyance: 0, reimb: 0,
+      pf: 2220, esiDed: 0, medical: 0, advance: 0, lwf: 68,
+    },
+    {
+      id: 'EMP003',
+      code: 'COR013142',
+      name: 'Sunita Devi',
+      branch: 'Delhi',
+      department: 'Housekeeping',
+      designation: 'Supervisor',
+      uan: '100915091702',
+      esi: '6936586032',
+      doj: '2023-07-01',
+      bankName: 'ICICI Bank',
+      accountNo: '601000567890123',
+      basic: 9500, hra: 3800, stdAllow: 0, fuelAllow: 0, bonus: 750, conveyance: 0, reimb: 0,
+      pf: 1140, esiDed: 0, medical: 0, advance: 500, lwf: 68,
+    },
+    {
+      id: 'EMP004',
+      code: 'COR013143',
+      name: 'Amit Sharma',
+      branch: 'Gurugram',
+      department: 'Delivery',
+      designation: 'Delivery Executive',
+      uan: '100915091703',
+      esi: '6936586033',
+      doj: '2025-01-10',
+      bankName: 'Axis Bank',
+      accountNo: '701000345678901',
+      basic: 8500, hra: 3400, stdAllow: 0, fuelAllow: 1200, bonus: 500, conveyance: 0, reimb: 0,
+      pf: 1020, esiDed: 0, medical: 0, advance: 0, lwf: 68,
+    },
+  ];
+  
+  state.employees = samples;
+  
+  // Seed sample attendance for Muni Ram for Dec 2025
+  const dec2025 = '2025-12';
+  const daysInDec = 31;
+  const attendance = {};
+  for (let d = 1; d <= daysInDec; d++) {
+    const day = new Date(2025, 11, d).getDay();
+    if (day === 0) {
+      attendance[d] = 'W'; // Sundays
+    } else if ([5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 29, 30, 31].includes(d)) {
+      attendance[d] = 'P';
+    } else {
+      attendance[d] = d === 1 || d === 2 ? 'L' : (d === 13 || d === 14 ? 'A' : (d === 20 ? 'A' : d === 21 ? 'A' : 'L'));
+    }
+  }
+  // Simplified: mark some specific days
+  for (let d = 1; d <= 31; d++) {
+    const day = new Date(2025, 11, d).getDay();
+    if (day === 0) attendance[d] = 'W';
+    else if ([13, 14, 21, 27, 28, 26].includes(d)) attendance[d] = 'A';
+    else if ([1, 2, 8, 9, 15, 16].includes(d)) attendance[d] = 'L';
+    else attendance[d] = 'P';
+  }
+  state.attendance['EMP001_2025-12'] = attendance;
+  
+  saveData();
+}
+
+// ============== LOGIN ==============
+function setupLoginLeaves() {
+  const container = document.getElementById('leafContainer');
+  if (!container) return;
+  
+  const leafSVG = `<svg width="40" height="40" viewBox="0 0 100 100">
+    <g transform="translate(50, 50)">
+      <ellipse cx="-15" cy="-20" rx="10" ry="18" fill="#aed581" transform="rotate(-30 -15 -20)"/>
+      <ellipse cx="15" cy="-20" rx="10" ry="18" fill="#7cb342" transform="rotate(30 15 -20)"/>
+      <ellipse cx="0" cy="-30" rx="8" ry="14" fill="#aed581"/>
+      <path d="M0,10 L0,40" stroke="#8d6e63" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </svg>`;
+  
+  for (let i = 0; i < 8; i++) {
+    const leaf = document.createElement('div');
+    leaf.className = 'leaf-particle';
+    leaf.innerHTML = leafSVG;
+    leaf.style.left = Math.random() * 100 + '%';
+    leaf.style.animationDelay = Math.random() * 15 + 's';
+    leaf.style.animationDuration = (10 + Math.random() * 10) + 's';
+    container.appendChild(leaf);
+  }
+}
+
+function setupEventListeners() {
+  document.getElementById('loginForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    if (username === 'admin' && password === 'coriander123') {
+      sessionStorage.setItem('coriander_session', 'active');
+      showToast('Welcome back, Administrator!', 'success');
+      setTimeout(() => showApp(), 300);
+    } else {
+      showToast('Invalid credentials. Please try again.', 'error');
+    }
+  });
+  
+  document.getElementById('employeeForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveEmployee();
+  });
+  
+  document.getElementById('logoInput').addEventListener('change', handleLogoUpload);
+  document.getElementById('importInput').addEventListener('change', handleImportData);
+}
+
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon = btn.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fas fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fas fa-eye';
+  }
+}
+
+function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  renderAll();
+}
+
+function logout() {
+  sessionStorage.removeItem('coriander_session');
+  location.reload();
+}
+
+// ============== NAVIGATION ==============
+function navigate(view) {
+  state.currentView = view;
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.view === view);
+  });
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  document.getElementById(view + 'View').classList.remove('hidden');
+  
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'employees') renderEmployees();
+  if (view === 'attendance') renderAttendance();
+  if (view === 'slips') renderSlipsView();
+  if (view === 'settings') renderSettings();
+}
+
+// ============== DASHBOARD ==============
+function renderAll() {
+  renderDashboard();
+  populateEmployeeSelects();
+  populateDeptFilter();
+}
+
+function renderDashboard() {
+  document.getElementById('statEmployees').textContent = state.employees.length;
+  
+  const monthStr = document.getElementById('slipMonth').value || new Date().toISOString().slice(0, 7);
+  const monthSlips = state.slips.filter(s => s.month === monthStr);
+  document.getElementById('statSlips').textContent = monthSlips.length;
+  
+  const totalPayroll = monthSlips.reduce((sum, s) => sum + s.netPayable, 0);
+  document.getElementById('statPayroll').textContent = totalPayroll.toLocaleString('en-IN');
+  
+  const pending = state.employees.length - monthSlips.length;
+  document.getElementById('statPending').textContent = Math.max(0, pending);
+  
+  const monthLabel = new Date(monthStr + '-01').toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+  document.getElementById('statMonthLabel').textContent = monthLabel;
+  
+  // Recent employees
+  const tbody = document.getElementById('recentEmployeesBody');
+  const recent = state.employees.slice(0, 5);
+  if (recent.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8" style="color: var(--ink-muted);">No employees yet. Add your first employee!</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = recent.map(emp => {
+    const net = calcEmpNet(emp);
+    const initials = emp.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    return `
+      <tr>
+        <td>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background: linear-gradient(135deg, var(--coriander-primary), var(--coriander-medium));">${initials}</div>
+            <div>
+              <p class="font-semibold text-sm" style="color: var(--ink);">${emp.name}</p>
+              <p class="text-xs" style="color: var(--ink-muted);">${emp.branch || '—'}</p>
+            </div>
+          </div>
+        </td>
+        <td><span class="font-mono text-xs">${emp.code}</span></td>
+        <td>${emp.department || '—'}</td>
+        <td>${emp.designation || '—'}</td>
+        <td class="font-semibold" style="color: var(--coriander-primary);">₹${net.toLocaleString('en-IN')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ============== EMPLOYEES ==============
+function populateEmployeeSelects() {
+  const options = state.employees.map(e => `<option value="${e.id}">${e.name} (${e.code})</option>`).join('');
+  const placeholder = '<option value="">Select Employee...</option>';
+  document.getElementById('attendanceEmployee').innerHTML = placeholder + options;
+  document.getElementById('slipEmployee').innerHTML = placeholder + options;
+}
+
+function populateDeptFilter() {
+  const depts = [...new Set(state.employees.map(e => e.department).filter(Boolean))];
+  const select = document.getElementById('deptFilter');
+  select.innerHTML = '<option value="">All Departments</option>' + depts.map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+function renderEmployees() {
+  const search = document.getElementById('employeeSearch').value.toLowerCase();
+  const deptFilter = document.getElementById('deptFilter').value;
+  
+  let filtered = state.employees.filter(emp => {
+    const matchSearch = !search || emp.name.toLowerCase().includes(search) || emp.code.toLowerCase().includes(search) || (emp.department || '').toLowerCase().includes(search);
+    const matchDept = !deptFilter || emp.department === deptFilter;
+    return matchSearch && matchDept;
+  });
+  
+  const tbody = document.getElementById('employeesBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12" style="color: var(--ink-muted);">
+      <i class="fas fa-users text-3xl mb-3 block opacity-30"></i>
+      No employees found. Click "Add Employee" to get started.
+    </td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(emp => {
+    const net = calcEmpNet(emp);
+    const initials = emp.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    return `
+      <tr>
+        <td>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background: linear-gradient(135deg, var(--coriander-primary), var(--coriander-medium));">${initials}</div>
+            <div>
+              <p class="font-semibold text-sm" style="color: var(--ink);">${emp.name}</p>
+              <p class="text-xs" style="color: var(--ink-muted);">${emp.bankName || ''}</p>
+            </div>
+          </div>
+        </td>
+        <td><span class="font-mono text-xs">${emp.code}</span></td>
+        <td>${emp.department || '—'}</td>
+        <td>${emp.designation || '—'}</td>
+        <td>${emp.branch || '—'}</td>
+        <td class="text-xs">${emp.doj ? new Date(emp.doj).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</td>
+        <td class="font-semibold" style="color: var(--coriander-primary);">₹${net.toLocaleString('en-IN')}</td>
+        <td>
+          <div class="flex gap-1">
+            <button onclick="editEmployee('${emp.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-blue-50" style="color: #1565c0;" title="Edit">
+              <i class="fas fa-edit text-xs"></i>
+            </button>
+            <button onclick="deleteEmployee('${emp.id}')" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50" style="color: var(--danger);" title="Delete">
+              <i class="fas fa-trash text-xs"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function calcEmpNet(emp) {
+  const earnings = (emp.basic||0) + (emp.hra||0) + (emp.stdAllow||0) + (emp.fuelAllow||0) + (emp.bonus||0) + (emp.conveyance||0) + (emp.reimb||0);
+  const deductions = (emp.pf||0) + (emp.esiDed||0) + (emp.medical||0) + (emp.advance||0) + (emp.lwf||0);
+  return earnings - deductions;
+}
+
+function openEmployeeModal(empId = null) {
+  const modal = document.getElementById('employeeModal');
+  const title = document.getElementById('employeeModalTitle');
+  
+  if (empId) {
+    const emp = state.employees.find(e => e.id === empId);
+    if (!emp) return;
+    title.textContent = 'Edit Employee';
+    document.getElementById('empId').value = emp.id;
+    document.getElementById('empName').value = emp.name;
+    document.getElementById('empCode').value = emp.code;
+    document.getElementById('empDoj').value = emp.doj;
+    document.getElementById('empBranch').value = emp.branch || '';
+    document.getElementById('empDept').value = emp.department || '';
+    document.getElementById('empDesignation').value = emp.designation || '';
+    document.getElementById('empBankName').value = emp.bankName || '';
+    document.getElementById('empAccountNo').value = emp.accountNo || '';
+    document.getElementById('empUan').value = emp.uan || '';
+    document.getElementById('empEsi').value = emp.esi || '';
+    document.getElementById('empBasic').value = emp.basic || 0;
+    document.getElementById('empHra').value = emp.hra || 0;
+    document.getElementById('empStdAllow').value = emp.stdAllow || 0;
+    document.getElementById('empFuelAllow').value = emp.fuelAllow || 0;
+    document.getElementById('empBonus').value = emp.bonus || 0;
+    document.getElementById('empConveyance').value = emp.conveyance || 0;
+    document.getElementById('empReimb').value = emp.reimb || 0;
+    document.getElementById('empPf').value = emp.pf || 0;
+    document.getElementById('empEsiDed').value = emp.esiDed || 0;
+    document.getElementById('empMedical').value = emp.medical || 0;
+    document.getElementById('empAdvance').value = emp.advance || 0;
+    document.getElementById('empLwf').value = emp.lwf || 0;
+  } else {
+    title.textContent = 'Add Employee';
+    document.getElementById('employeeForm').reset();
+    document.getElementById('empId').value = '';
+    ['empBasic', 'empHra', 'empStdAllow', 'empFuelAllow', 'empBonus', 'empConveyance', 'empReimb', 'empPf', 'empEsiDed', 'empMedical', 'empAdvance', 'empLwf'].forEach(id => {
+      document.getElementById(id).value = 0;
+    });
+  }
+  
+  calcNetSalary();
+  modal.classList.remove('hidden');
+}
+
+function closeEmployeeModal() {
+  document.getElementById('employeeModal').classList.add('hidden');
+}
+
+function calcNetSalary() {
+  const earnings = ['empBasic', 'empHra', 'empStdAllow', 'empFuelAllow', 'empBonus', 'empConveyance', 'empReimb']
+    .reduce((sum, id) => sum + (parseFloat(document.getElementById(id).value) || 0), 0);
+  const deductions = ['empPf', 'empEsiDed', 'empMedical', 'empAdvance', 'empLwf']
+    .reduce((sum, id) => sum + (parseFloat(document.getElementById(id).value) || 0), 0);
+  
+  document.getElementById('totalEarningsDisplay').textContent = '₹' + earnings.toLocaleString('en-IN');
+  document.getElementById('totalDeductionsDisplay').textContent = '₹' + deductions.toLocaleString('en-IN');
+  document.getElementById('netSalaryDisplay').textContent = '₹' + (earnings - deductions).toLocaleString('en-IN');
+}
+
+function saveEmployee() {
+  const id = document.getElementById('empId').value || 'EMP' + Date.now().toString().slice(-6);
+  
+  const emp = {
+    id,
+    name: document.getElementById('empName').value,
+    code: document.getElementById('empCode').value,
+    doj: document.getElementById('empDoj').value,
+    branch: document.getElementById('empBranch').value,
+    department: document.getElementById('empDept').value,
+    designation: document.getElementById('empDesignation').value,
+    bankName: document.getElementById('empBankName').value,
+    accountNo: document.getElementById('empAccountNo').value,
+    uan: document.getElementById('empUan').value,
+    esi: document.getElementById('empEsi').value,
+    basic: parseFloat(document.getElementById('empBasic').value) || 0,
+    hra: parseFloat(document.getElementById('empHra').value) || 0,
+    stdAllow: parseFloat(document.getElementById('empStdAllow').value) || 0,
+    fuelAllow: parseFloat(document.getElementById('empFuelAllow').value) || 0,
+    bonus: parseFloat(document.getElementById('empBonus').value) || 0,
+    conveyance: parseFloat(document.getElementById('empConveyance').value) || 0,
+    reimb: parseFloat(document.getElementById('empReimb').value) || 0,
+    pf: parseFloat(document.getElementById('empPf').value) || 0,
+    esiDed: parseFloat(document.getElementById('empEsiDed').value) || 0,
+    medical: parseFloat(document.getElementById('empMedical').value) || 0,
+    advance: parseFloat(document.getElementById('empAdvance').value) || 0,
+    lwf: parseFloat(document.getElementById('empLwf').value) || 0,
+  };
+  
+  const existingIdx = state.employees.findIndex(e => e.id === id);
+  if (existingIdx >= 0) {
+    state.employees[existingIdx] = emp;
+    showToast('Employee updated successfully!', 'success');
+  } else {
+    state.employees.push(emp);
+    showToast('Employee added successfully!', 'success');
+  }
+  
+  saveData();
+  populateEmployeeSelects();
+  populateDeptFilter();
+  renderEmployees();
+  renderDashboard();
+  closeEmployeeModal();
+}
+
+function editEmployee(id) {
+  openEmployeeModal(id);
+}
+
+function deleteEmployee(id) {
+  const emp = state.employees.find(e => e.id === id);
+  if (!emp) return;
+  
+  showConfirm(
+    'Delete Employee',
+    `Are you sure you want to delete "${emp.name}"? This will also remove all associated attendance and slip data.`,
+    () => {
+      state.employees = state.employees.filter(e => e.id !== id);
+      // Clean up attendance
+      Object.keys(state.attendance).forEach(key => {
+        if (key.startsWith(id + '_')) delete state.attendance[key];
+      });
+      // Clean up slips
+      state.slips = state.slips.filter(s => s.employeeId !== id);
+      
+      saveData();
+      populateEmployeeSelects();
+      populateDeptFilter();
+      renderEmployees();
+      renderDashboard();
+      showToast('Employee deleted successfully!', 'success');
+    }
+  );
+}
+
+// ============== ATTENDANCE ==============
+function renderAttendance() {
+  const empId = document.getElementById('attendanceEmployee').value;
+  const monthStr = document.getElementById('attendanceMonth').value;
+  
+  if (!empId || !monthStr) return;
+  
+  const [year, month] = monthStr.split('-').map(Number);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const key = `${empId}_${monthStr}`;
+  
+  if (!state.attendance[key]) state.attendance[key] = {};
+  const attendance = state.attendance[key];
+  
+  const calendar = document.getElementById('attendanceCalendar');
+  let html = '';
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    const status = attendance[d] || '';
+    const dayName = new Date(year, month - 1, d).toLocaleDateString('en-US', { weekday: 'short' });
+    const dayLetter = dayName[0];
+    
+    let statusClass = '';
+    let statusLabel = '';
+    if (status === 'P') { statusClass = 'present'; statusLabel = 'P'; }
+    else if (status === 'A') { statusClass = 'absent'; statusLabel = 'A'; }
+    else if (status === 'L') { statusClass = 'leave'; statusLabel = 'L'; }
+    else if (status === 'W') { statusClass = 'weekoff'; statusLabel = 'W'; }
+    
+    html += `
+      <div class="day-cell ${statusClass}" onclick="toggleDay('${empId}', '${monthStr}', ${d})" title="${dayName}, ${d}">
+        <div class="text-center">
+          <div class="text-[10px] opacity-70">${dayLetter}</div>
+          <div class="text-sm font-bold">${d}</div>
+          <div class="text-[10px] font-bold">${statusLabel}</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  calendar.innerHTML = html;
+  
+  // Update summary
+  let present = 0, absent = 0, leave = 0, weekOff = 0;
+  Object.values(attendance).forEach(s => {
+    if (s === 'P') present++;
+    else if (s === 'A') absent++;
+    else if (s === 'L') leave++;
+    else if (s === 'W') weekOff++;
+  });
+  
+  document.getElementById('sumPresent').textContent = present;
+  document.getElementById('sumAbsent').textContent = absent;
+  document.getElementById('sumLeave').textContent = leave;
+  document.getElementById('sumWeekOff').textContent = weekOff;
+  document.getElementById('sumPayDays').textContent = present + weekOff + leave;
+}
+
+function toggleDay(empId, monthStr, day) {
+  const key = `${empId}_${monthStr}`;
+  if (!state.attendance[key]) state.attendance[key] = {};
+  const current = state.attendance[key][day] || '';
+  
+  const cycle = ['', 'P', 'A', 'L', 'W'];
+  const nextIdx = (cycle.indexOf(current) + 1) % cycle.length;
+  
+  if (nextIdx === 0) {
+    delete state.attendance[key][day];
+  } else {
+    state.attendance[key][day] = cycle[nextIdx];
+  }
+  
+  saveData();
+  renderAttendance();
+}
+
+function markAllPresent() {
+  const empId = document.getElementById('attendanceEmployee').value;
+  const monthStr = document.getElementById('attendanceMonth').value;
+  if (!empId || !monthStr) return;
+  
+  const [year, month] = monthStr.split('-').map(Number);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const key = `${empId}_${monthStr}`;
+  
+  if (!state.attendance[key]) state.attendance[key] = {};
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (!state.attendance[key][d] || state.attendance[key][d] === '') {
+      state.attendance[key][d] = 'P';
+    }
+  }
+  
+  saveData();
+  renderAttendance();
+  showToast('All unmarked days set to Present', 'success');
+}
+
+function markWeekOffs() {
+  const empId = document.getElementById('attendanceEmployee').value;
+  const monthStr = document.getElementById('attendanceMonth').value;
+  if (!empId || !monthStr) return;
+  
+  const [year, month] = monthStr.split('-').map(Number);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const key = `${empId}_${monthStr}`;
+  
+  if (!state.attendance[key]) state.attendance[key] = {};
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dayName = new Date(year, month - 1, d).getDay();
+    if (dayName === 0) { // Sunday
+      state.attendance[key][d] = 'W';
+    }
+  }
+  
+  saveData();
+  renderAttendance();
+  showToast('Sundays marked as Week Off', 'success');
+}
+
+function clearAttendance() {
+  const empId = document.getElementById('attendanceEmployee').value;
+  const monthStr = document.getElementById('attendanceMonth').value;
+  if (!empId || !monthStr) return;
+  
+  showConfirm('Clear Attendance', 'Clear all attendance for this employee for this month?', () => {
+    const key = `${empId}_${monthStr}`;
+    state.attendance[key] = {};
+    saveData();
+    renderAttendance();
+    showToast('Attendance cleared', 'success');
+  });
+}
+
+// ============== SALARY SLIPS ==============
+function renderSlipsView() {
+  renderPenalties();
+}
+
+function onSlipEmployeeChange() {
+  // Auto-generate if both selected
+}
+
+function onSlipMonthChange() {
+  // Auto-generate if both selected
+}
+
+function addPenalty() {
+  state.penalties.push({ id: Date.now(), description: '', amount: 0 });
+  renderPenalties();
+}
+
+function removePenalty(id) {
+  state.penalties = state.penalties.filter(p => p.id !== id);
+  renderPenalties();
+}
+
+function updatePenalty(id, field, value) {
+  const penalty = state.penalties.find(p => p.id === id);
+  if (penalty) {
+    penalty[field] = field === 'amount' ? (parseFloat(value) || 0) : value;
+  }
+}
+
+function renderPenalties() {
+  const container = document.getElementById('penaltiesList');
+  if (state.penalties.length === 0) {
+    container.innerHTML = `<p class="text-xs italic py-2" style="color: var(--ink-muted);">No penalties added. Click "Add Penalty" to include extra deductions.</p>`;
+    return;
+  }
+  
+  container.innerHTML = state.penalties.map(p => `
+    <div class="flex gap-2 items-center">
+      <input type="text" placeholder="Penalty description (e.g., Late arrival, Damaged equipment)" 
+        value="${p.description}" 
+        onchange="updatePenalty(${p.id}, 'description', this.value)" 
+        class="input-field flex-1 px-3 py-2 text-sm">
+      <input type="number" placeholder="Amount" 
+        value="${p.amount}" 
+        onchange="updatePenalty(${p.id}, 'amount', this.value)" 
+        class="input-field w-32 px-3 py-2 text-sm">
+      <button onclick="removePenalty(${p.id})" class="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-red-50" style="color: var(--danger);">
+        <i class="fas fa-times text-xs"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+function generateSlipPreview() {
+  const empId = document.getElementById('slipEmployee').value;
+  const monthStr = document.getElementById('slipMonth').value;
+  
+  if (!empId || !monthStr) {
+    showToast('Please select both employee and month', 'error');
+    return;
+  }
+  
+  const emp = state.employees.find(e => e.id === empId);
+  if (!emp) return;
+  
+  const [year, month] = monthStr.split('-').map(Number);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const attendanceKey = `${empId}_${monthStr}`;
+  const attendance = state.attendance[attendanceKey] || {};
+  
+  let present = 0, absent = 0, leave = 0, weekOff = 0;
+  Object.values(attendance).forEach(s => {
+    if (s === 'P') present++;
+    else if (s === 'A') absent++;
+    else if (s === 'L') leave++;
+    else if (s === 'W') weekOff++;
+  });
+  
+  const payDays = daysInMonth;
+  const workingDays = present + weekOff + leave;
+  const attendanceRatio = workingDays / payDays;
+  
+  // Calculate payable amounts based on attendance
+  const calcPayable = (rate) => Math.round(rate * attendanceRatio);
+  
+  const components = [
+    { name: 'Basic', rate: emp.basic || 0, payable: calcPayable(emp.basic || 0) },
+    { name: 'House rent Allowance', rate: emp.hra || 0, payable: calcPayable(emp.hra || 0) },
+    { name: 'Standard Allowance', rate: emp.stdAllow || 0, payable: calcPayable(emp.stdAllow || 0) },
+    { name: 'Fuel Allowance', rate: emp.fuelAllow || 0, payable: calcPayable(emp.fuelAllow || 0) },
+    { name: 'Bonus', rate: emp.bonus || 0, payable: calcPayable(emp.bonus || 0) },
+    { name: 'Conveyance', rate: emp.conveyance || 0, payable: 0 },
+    { name: 'Reimbursement', rate: emp.reimb || 0, payable: calcPayable(emp.reimb || 0 )},
+  ];
+  
+  const totalEarnings = components.reduce((sum, c) => sum + c.payable, 0);
+  
+  const deductions = [
+    { name: 'Employee PF', amount: emp.pf || 0 },
+    { name: 'Employee ESI', amount: emp.esiDed || 0 },
+    { name: 'Medical', amount: emp.medical || 0 },
+    { name: 'Advance', amount: emp.advance || 0 },
+  ];
+  
+  // Add penalties
+  const validPenalties = state.penalties.filter(p => p.amount > 0);
+  validPenalties.forEach(p => {
+    deductions.push({ name: p.description || 'Penalty', amount: p.amount, isPenalty: true });
+  });
+  
+  deductions.push({ name: 'LWF', amount: emp.lwf || 0 });
+  
+  const totalDeductions = deductions.reduce((sum, d) => sum + d.amount, 0);
+  const netPayable = totalEarnings - totalDeductions;
+  
+  const monthLabel = new Date(year, month - 1).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' });
+  
+  const slipData = {
+    emp, monthStr, monthLabel, year, month,
+    srNo: state.company.srNo,
+    srSeries: state.company.srSeries,
+    payDays, weekOff, leaveDays: leave, absent,
+    present, components, deductions,
+    totalEarnings, totalDeductions, netPayable,
+    penalties: validPenalties,
+  };
+  
+  state.currentSlipData = slipData;
+  renderSlipHTML(slipData);
+  
+  document.getElementById('slipPreviewContainer').classList.remove('hidden');
+  document.getElementById('slipPreviewContainer').scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderSlipHTML(data) {
+  const { emp, monthLabel, srNo, srSeries, payDays, weekOff, leaveDays, absent, components, deductions, totalEarnings, totalDeductions, netPayable } = data;
+  
+  const amountInWords = numberToWords(netPayable);
+  const dojFormatted = emp.doj ? new Date(emp.doj).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+  
+  const logoHTML = state.company.logo 
+    ? `<img src="${state.company.logo}" alt="Logo" style="max-height: 70px; max-width: 120px; object-fit: contain;">`
+    : `<svg width="60" height="60" viewBox="0 0 100 100">
+        <g transform="translate(50, 50)">
+          <ellipse cx="-15" cy="-20" rx="10" ry="18" fill="#5a9367" transform="rotate(-30 -15 -20)"/>
+          <ellipse cx="15" cy="-20" rx="10" ry="18" fill="#4a7c59" transform="rotate(30 15 -20)"/>
+          <ellipse cx="-22" cy="0" rx="9" ry="16" fill="#7cb342" transform="rotate(-45 -22 0)"/>
+          <ellipse cx="22" cy="0" rx="9" ry="16" fill="#5a9367" transform="rotate(45 22 0)"/>
+          <ellipse cx="0" cy="-30" rx="8" ry="14" fill="#aed581"/>
+          <path d="M0,10 L0,40" stroke="#5d4037" stroke-width="2.5" stroke-linecap="round"/>
+          <ellipse cx="0" cy="45" rx="28" ry="6" fill="#8d6e63" opacity="0.5"/>
+        </g>
+      </svg>`;
+  
+  const html = `
+    <div style="font-family: 'Plus Jakarta Sans', sans-serif; color: #1a2e1d; position: relative;">
+      <!-- Decorative corner -->
+      <div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; overflow: hidden;">
+        <div style="position: absolute; top: -40px; right: -40px; width: 100px; height: 100px; background: linear-gradient(135deg, transparent 50%, rgba(124, 179, 66, 0.08) 50%); transform: rotate(45deg);"></div>
+      </div>
+      
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 2px solid #2d5f3f;">
+        <div style="display: flex; gap: 16px; align-items: center;">
+          <div style="flex-shrink: 0;">${logoHTML}</div>
+          <div>
+            <h1 style="font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; color: #2d5f3f; margin: 0; line-height: 1.2;">${state.company.name}</h1>
+            <p style="font-size: 10px; color: #6b7c6e; margin: 2px 0 0 0; line-height: 1.4;">${state.company.address}</p>
+          </div>
+        </div>
+        <div style="text-align: right; font-size: 9px; color: #6b7c6e;">
+          <p style="margin: 0;"><strong style="color: #2d5f3f;">SR NO. ${srNo} FROM ${srSeries}</strong></p>
+          <p style="margin: 2px 0 0 0;">[See Rule 78(1) (b)]</p>
+          <p style="margin: 4px 0 0 0;">ESIC Code No. <strong>${state.company.esicCode}</strong></p>
+          <p style="margin: 2px 0 0 0;">P.F. Code No. <strong>${state.company.pfCode}</strong></p>
+        </div>
+      </div>
+      
+      <!-- Title -->
+      <div style="text-align: center; margin-bottom: 16px;">
+        <h2 style="font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700; color: #1a3a2a; margin: 0; letter-spacing: 0.05em; text-transform: uppercase;">Wages Payment Slip</h2>
+        <p style="font-size: 11px; color: #4a7c59; margin: 4px 0 0 0; font-weight: 600;">Pay Slip – ${monthLabel}</p>
+      </div>
+      
+      <!-- Employee Details -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 16px; border: 1px solid #e0ddd5; border-radius: 8px; overflow: hidden;">
+        <div style="padding: 8px 12px; border-right: 1px solid #e0ddd5; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Employee Code</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.code}</p>
+        </div>
+        <div style="padding: 8px 12px; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Bank Name</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.bankName || '—'}</p>
+        </div>
+        <div style="padding: 8px 12px; border-right: 1px solid #e0ddd5; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Employee Name</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.name}</p>
+        </div>
+        <div style="padding: 8px 12px; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Account No.</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.accountNo || '—'}</p>
+        </div>
+        <div style="padding: 8px 12px; border-right: 1px solid #e0ddd5; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Branch</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.branch || '—'}</p>
+        </div>
+        <div style="padding: 8px 12px; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Pay Days</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${payDays}</p>
+        </div>
+        <div style="padding: 8px 12px; border-right: 1px solid #e0ddd5; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Department</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.department || '—'}</p>
+        </div>
+        <div style="padding: 8px 12px; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Week Off</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${weekOff}</p>
+        </div>
+        <div style="padding: 8px 12px; border-right: 1px solid #e0ddd5; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Designation</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.designation || '—'}</p>
+        </div>
+        <div style="padding: 8px 12px; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Leave Days</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${leaveDays}</p>
+        </div>
+        <div style="padding: 8px 12px; border-right: 1px solid #e0ddd5; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">UAN NO.</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.uan || '—'}</p>
+        </div>
+        <div style="padding: 8px 12px; border-bottom: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">Absent</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #c62828;">${absent}</p>
+        </div>
+        <div style="padding: 8px 12px; border-right: 1px solid #e0ddd5;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">DOJ</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${dojFormatted}</p>
+        </div>
+        <div style="padding: 8px 12px;">
+          <p style="font-size: 9px; color: #6b7c6e; margin: 0; text-transform: uppercase; letter-spacing: 0.03em;">ESI Number</p>
+          <p style="font-size: 11px; font-weight: 600; margin: 2px 0 0 0; color: #1a2e1d;">${emp.esi || '—'}</p>
+        </div>
+      </div>
+      
+      <!-- Earnings & Deductions Tables -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <!-- Earnings -->
+        <div>
+          <table class="slip-table">
+            <thead>
+              <tr>
+                <th colspan="3" style="text-align: center; background: #2d5f3f;">Earnings</th>
+              </tr>
+              <tr>
+                <th style="background: #4a7c59;">Component</th>
+                <th style="background: #4a7c59; text-align: right;">Rate</th>
+                <th style="background: #4a7c59; text-align: right;">Payable</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${components.map(c => `
+                <tr>
+                  <td>${c.name}</td>
+                  <td style="text-align: right;">${c.rate.toLocaleString('en-IN')}</td>
+                  <td style="text-align: right; font-weight: 600;">${c.payable.toLocaleString('en-IN')}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row">
+                <td>Total</td>
+                <td style="text-align: right;">${components.reduce((s,c) => s + c.rate, 0).toLocaleString('en-IN')}</td>
+                <td style="text-align: right;">${totalEarnings.toLocaleString('en-IN')}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Deductions -->
+        <div>
+          <table class="slip-table">
+            <thead>
+              <tr>
+                <th colspan="2" style="text-align: center; background: #c62828;">Deduction</th>
+              </tr>
+              <tr>
+                <th style="background: #d32f2f;">Component</th>
+                <th style="background: #d32f2f; text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${deductions.map(d => `
+                <tr ${d.isPenalty ? 'style="background: #fff3e0;"' : ''}>
+                  <td>${d.name}${d.isPenalty ? ' <span style="font-size: 8px; color: #ef6c00; font-weight: 600;">(PENALTY)</span>' : ''}</td>
+                  <td style="text-align: right; font-weight: 600;">${d.amount.toLocaleString('en-IN')}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row" style="background: #ffebee;">
+                <td style="color: #c62828; border-top: 2px solid #ef9a9a;">Total Deduction</td>
+                <td style="text-align: right; color: #c62828; border-top: 2px solid #ef9a9a;">${totalDeductions.toLocaleString('en-IN')}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Net Payable -->
+      <div style="background: linear-gradient(135deg, #e8f5e9 0%, #f1f8f2 100%); border: 2px solid #7cb342; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <p style="font-size: 10px; color: #4a7c59; margin: 0; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Amount In Word</p>
+          <p style="font-size: 11px; color: #1a2e1d; margin: 0; font-weight: 600;">Rupees ${amountInWords} Only</p>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px dashed #7cb342;">
+          <p style="font-family: 'Fraunces', serif; font-size: 16px; color: #1a3a2a; margin: 0; font-weight: 700;">Net Payable</p>
+          <p style="font-family: 'Fraunces', serif; font-size: 24px; color: #2d5f3f; margin: 0; font-weight: 700;">₹ ${netPayable.toLocaleString('en-IN')}</p>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px; padding-top: 12px; border-top: 1px solid #e0ddd5;">
+        <p style="font-size: 9px; color: #6b7c6e; margin: 0; font-style: italic;">This is computer generated salary slip</p>
+        <div style="text-align: center;">
+          <div style="width: 120px; border-top: 1px dashed #6b7c6e; padding-top: 4px;">
+            <p style="font-size: 9px; color: #6b7c6e; margin: 0;">Authorised Signature</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Brand watermark -->
+      <div style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); opacity: 0.04; pointer-events: none;">
+        <svg width="80" height="80" viewBox="0 0 100 100">
+          <g transform="translate(50, 50)">
+            <ellipse cx="-15" cy="-20" rx="10" ry="18" fill="#2d5f3f" transform="rotate(-30 -15 -20)"/>
+            <ellipse cx="15" cy="-20" rx="10" ry="18" fill="#2d5f3f" transform="rotate(30 15 -20)"/>
+            <ellipse cx="0" cy="-30" rx="8" ry="14" fill="#2d5f3f"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('slipPrintArea').innerHTML = html;
+}
+
+function numberToWords(num) {
+  if (num === 0) return 'Zero';
+  
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 
+               'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  
+  function twoDigit(n) {
+    if (n < 20) return ones[n];
+    return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+  }
+  
+  function threeDigit(n) {
+    let str = '';
+    if (n >= 100) str += ones[Math.floor(n / 100)] + ' Hundred';
+    if (n % 100) str += (str ? ' ' : '') + twoDigit(n % 100);
+    return str;
+  }
+  
+  let result = '';
+  const crore = Math.floor(num / 10000000);
+  const lakh = Math.floor((num % 10000000) / 100000);
+  const thousand = Math.floor((num % 100000) / 1000);
+  const remainder = num % 1000;
+  
+  if (crore) result += twoDigit(crore) + ' Crore ';
+  if (lakh) result += twoDigit(lakh) + ' Lakh ';
+  if (thousand) result += twoDigit(thousand) + ' Thousand ';
+  if (remainder) result += threeDigit(remainder);
+  
+  return result.trim();
+}
+
+async function downloadPDF() {
+  if (!state.currentSlipData) {
+    showToast('Please generate a slip preview first', 'error');
+    return;
+  }
+  
+  const btn = event.target.closest('button');
+  const originalHTML = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+  btn.disabled = true;
+  
+  try {
+    const element = document.getElementById('slipPrintArea');
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      logging: false,
+    });
+    
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const heightLimit = 297;
+    
+    let position = 0;
+    
+    if (imgHeight < heightLimit) {
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    } else {
+      // Multi-page handling
+      let remainingHeight = imgHeight;
+      let yOffset = 0;
+      while (remainingHeight > 0) {
+        pdf.addImage(imgData, 'PNG', 0, -yOffset, imgWidth, imgHeight);
+        remainingHeight -= heightLimit;
+        yOffset += heightLimit;
+        if (remainingHeight > 0) {
+          pdf.addPage();
+        }
+      }
+    }
+    
+    const fileName = `Salary_Slip_${state.currentSlipData.emp.name}_${state.currentSlipData.monthStr}.pdf`;
+    pdf.save(fileName);
+    
+    // Save slip record
+    const slipRecord = {
+      id: 'SLIP' + Date.now(),
+      employeeId: state.currentSlipData.emp.id,
+      employeeName: state.currentSlipData.emp.name,
+      month: state.currentSlipData.monthStr,
+      netPayable: state.currentSlipData.netPayable,
+      totalEarnings: state.currentSlipData.totalEarnings,
+      totalDeductions: state.currentSlipData.totalDeductions,
+      generatedAt: new Date().toISOString(),
+    };
+    
+    // Remove existing slip for same employee+month
+    state.slips = state.slips.filter(s => !(s.employeeId === slipRecord.employeeId && s.month === slipRecord.month));
+    state.slips.push(slipRecord);
+    
+    // Increment SR No
+    state.company.srNo = (state.company.srNo || 0) + 1;
+    
+    saveData();
+    showToast('Salary slip downloaded successfully!', 'success');
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    showToast('Error generating PDF. Please try again.', 'error');
+  } finally {
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
+  }
+}
+
+// ============== SETTINGS ==============
+function renderSettings() {
+  document.getElementById('setCompanyName').value = state.company.name;
+  document.getElementById('setCompanyAddress').value = state.company.address;
+  document.getElementById('setEsicCode').value = state.company.esicCode;
+  document.getElementById('setPfCode').value = state.company.pfCode;
+  document.getElementById('setSrNo').value = state.company.srNo;
+  document.getElementById('setSrSeries').value = state.company.srSeries;
+  
+  if (state.company.logo) {
+    document.getElementById('logoPreview').innerHTML = `<img src="${state.company.logo}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+  }
+}
+
+function saveCompanySettings() {
+  state.company.name = document.getElementById('setCompanyName').value;
+  state.company.address = document.getElementById('setCompanyAddress').value;
+  state.company.esicCode = document.getElementById('setEsicCode').value;
+  state.company.pfCode = document.getElementById('setPfCode').value;
+  state.company.srNo = parseInt(document.getElementById('setSrNo').value) || 1;
+  state.company.srSeries = document.getElementById('setSrSeries').value || 'XIX';
+  
+  saveData();
+  showToast('Company settings saved!', 'success');
+}
+
+function handleLogoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('Logo size should be less than 2MB', 'error');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    state.company.logo = event.target.result;
+    document.getElementById('logoPreview').innerHTML = `<img src="${state.company.logo}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+    saveData();
+    showToast('Logo uploaded successfully!', 'success');
+  };
+  reader.readAsDataURL(file);
+}
+
+function exportData() {
+  const data = {
+    employees: state.employees,
+    attendance: state.attendance,
+    slips: state.slips,
+    company: state.company,
+    exportDate: new Date().toISOString(),
+  };
+  
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `coriander_backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported successfully!', 'success');
+}
+
+function handleImportData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (data.employees) state.employees = data.employees;
+      if (data.attendance) state.attendance = data.attendance;
+      if (data.slips) state.slips = data.slips;
+      if (data.company) state.company = data.company;
+      saveData();
+      renderAll();
+      renderSettings();
+      showToast('Data imported successfully!', 'success');
+    } catch (err) {
+      showToast('Invalid file format', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function resetData() {
+  showConfirm('Reset All Data', 'This will permanently delete all employees, attendance, and slips. This cannot be undone.', () => {
+    localStorage.removeItem('coriander_employees');
+    localStorage.removeItem('coriander_attendance');
+    localStorage.removeItem('coriander_slips');
+    localStorage.removeItem('coriander_company');
+    location.reload();
+  });
+}
+
+// ============== CONFIRM MODAL ==============
+let confirmCallback = null;
+
+function showConfirm(title, message, callback) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  confirmCallback = callback;
+  document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.add('hidden');
+  confirmCallback = null;
+}
+
+document.getElementById('confirmBtn').addEventListener('click', () => {
+  if (confirmCallback) confirmCallback();
+  closeConfirm();
+});
+
+// ============== TOAST ==============
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  
+  const colors = {
+    success: { bg: '#e8f5e9', border: '#4a7c59', text: '#2d5f3f', icon: 'fa-check-circle' },
+    error: { bg: '#ffebee', border: '#c62828', text: '#c62828', icon: 'fa-exclamation-circle' },
+    info: { bg: '#e3f2fd', border: '#1565c0', text: '#1565c0', icon: 'fa-info-circle' },
+  };
+  
+  const c = colors[type] || colors.info;
+  
+  toast.className = 'toast flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg';
+  toast.style.cssText = `background: ${c.bg}; border-left: 4px solid ${c.border}; color: ${c.text}; min-width: 280px;`;
+  toast.innerHTML = `
+    <i class="fas ${c.icon}"></i>
+    <p class="text-sm font-medium">${message}</p>
+  `;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ============== START ==============
+init();
+</script>
+
+</body>
+</html>
